@@ -11,6 +11,7 @@ def unpickle(file):
     with open(file, 'rb') as fo:
         dict = pickle.load(fo, encoding='bytes')
     return dict
+
 import numpy as np
 #load Data
 train1 = unpickle('data_batch_1')
@@ -18,7 +19,7 @@ train2 = unpickle('data_batch_2')
 train3 = unpickle('data_batch_3')
 train4 = unpickle('data_batch_4')
 train5 = unpickle('data_batch_5')
-train = np.concatenate(train1,train2,train3,train4,train5)
+
 
 #define  parameter
 lrate = 0.001
@@ -28,9 +29,12 @@ display_step = 10
 beta = 0.01
 
 #Network Parameter
-n_input = 784 #  data input  28*28
+imagesize = 24
+channel = 3
+n_input = imagesize * imagesize * channel #  data input  28*28
 n_classes = 10 # classes 0-9
 stride = 1
+
 
 #set TF IO
 x = tf.placeholder(tf.float32, [None, n_input])
@@ -89,6 +93,12 @@ def conv_NN(x,weights,biases):
     fc1 = tf.nn.relu(fc1)
     ##DROPOUT     fc1 = tf.nn.dropout(fc1, dropout)
     result =  tf.add(tf.matmul(fc1, weights['out']), biases['out'])
+    
+    
+     fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
+    fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
+    fc1 = tf.nn.relu(fc1)
+    
     return result 
 
 
@@ -96,11 +106,6 @@ predict = conv_NN(x,weights,biases)
 
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=predict, labels=y))
-#L1
-for w in weights:
-    regularizer += tf.reduce_sum(tf.abs(weights[w]))
-cost = tf.reduce_mean(cost + beta * regularizer)
-
 optimizer = tf.train.AdamOptimizer(learning_rate=lrate).minimize(cost)
 
 # Evaluate model
